@@ -1,0 +1,82 @@
+{
+  "standard": {
+    "text": "Location: Austin, TX | Remote: Yes | Willing to relocate: No<p>Backend Python developer.</p>",
+    "expected": {
+      "location": "Austin, TX",
+      "remote": "Yes",
+      "relocation": "No"
+    }
+  },
+  "values_as_written": {
+    "text": "Location: New York, NY | Remote: Remote only (US time zones) | Willing to relocate: Open to it<p>Frontend developer.</p>",
+    "expected": {
+      "location": "New York, NY",
+      "remote": "Remote only (US time zones)",
+      "relocation": "Open to it"
+    }
+  },
+  "lowercase_no_spaces": {
+    "text": "location:Seattle, WA|remote:Yes|relocation:Within the US<p>Data analyst.</p>",
+    "expected": {
+      "location": "Seattle, WA",
+      "remote": "Yes",
+      "relocation": "Within the US"
+    }
+  },
+  "fields_in_another_order": {
+    "text": "Remote: Hybrid | Willing to relocate: No | Location: Chicago, IL | Contact: me at example dot com<p>Product engineer.</p>",
+    "expected": {
+      "location": "Chicago, IL",
+      "remote": "Hybrid",
+      "relocation": "No"
+    }
+  },
+  "extra_spaces": {
+    "text": "  Willing to relocate :  Open to the right role   |   Location :   Austin, TX  | Remote : Yes  <p>Backend Python developer.</p>",
+    "expected": {
+      "location": "Austin, TX",
+      "remote": "Yes",
+      "relocation": "Open to the right role"
+    }
+  },
+  "unknown_labels": {
+    "text": "Seeking: Python work in Austin | Availability: Immediate | Note: Remote preferred<p>Backend developer.</p>",
+    "expected": {
+      "location": "",
+      "remote": "",
+      "relocation": ""
+    }
+  },
+  "missing_relocation": {
+    "text": "Location: Denver, CO | Remote: No<p>Backend developer.</p>",
+    "expected": {
+      "location": "Denver, CO",
+      "remote": "No",
+      "relocation": ""
+    }
+  },
+  "free_text": {
+    "text": "Python developer in Austin looking for backend work.<p>Five years of experience with APIs.</p>",
+    "expected": {
+      "location": "",
+      "remote": "",
+      "relocation": ""
+    }
+  },
+  "labels_on_later_line": {
+    "text": "Python developer looking for backend work.\nLocation: Austin, TX | Remote: Yes | Willing to relocate: No",
+    "expected": {
+      "location": "",
+      "remote": "",
+      "relocation": ""
+    }
+  },
+  "empty": {
+    "text": "",
+    "expected": {
+      "location": "",
+      "remote": "",
+      "relocation": ""
+    }
+  }
+}
