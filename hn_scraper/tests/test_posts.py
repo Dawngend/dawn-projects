@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from posts import parse_first_line
+from posts import is_us_location, parse_first_line
 from threads import parse_top_level_comments
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
@@ -78,3 +78,92 @@ def test_first_line_of_each_comment_in_saved_thread():
         {"location": "Austin, TX", "remote": "Yes", "relocation": "No"},
         {"location": "Remote (US)", "remote": "Yes", "relocation": "Yes"},
     ]
+
+
+def test_us_locations_match():
+    for location in [
+        "United States",
+        "united states",
+        "USA",
+        "US",
+        "Remote (US)",
+        "California",
+        "New York",
+        "North Carolina",
+        "Texas",
+        "District of Columbia",
+        "Austin, TX",
+        "Seattle, WA",
+        "New York, NY",
+        "Chicago, IL",
+        "Portland, OR",
+        "Indianapolis, IN",
+        "Bangor, ME",
+        "Washington, DC",
+        "San Francisco",
+        "New York City",
+        "NYC",
+        "Bay Area",
+        "Boston",
+        "Los Angeles",
+        "Denver",
+        "Atlanta",
+    ]:
+        assert is_us_location(location) is True
+
+
+def test_non_us_locations_are_skipped():
+    for location in [
+        "London, UK",
+        "Berlin, Germany",
+        "Toronto, ON, Canada",
+        "Vancouver, BC",
+        "Paris, France",
+        "Bangalore, India",
+        "Sydney, Australia",
+        "Vienna, Austria",
+        "Tokyo, Japan",
+        "Madrid, Spain",
+        "Rio de Janeiro, Brazil",
+        "Europe",
+    ]:
+        assert is_us_location(location) is False
+
+
+def test_unclear_and_unrecognized_locations_are_skipped():
+    for location in [
+        "",
+        None,
+        "Remote",
+        "Remote only",
+        "Anywhere",
+        "Worldwide",
+        "UTC-5",
+        "EST",
+        "North America",
+        "Somewhere",
+        "Unknown",
+        "TBD",
+        "Narnia",
+    ]:
+        assert is_us_location(location) is False
+
+
+def test_us_and_state_codes_only_match_whole_location_tokens():
+    for location in [
+        "Australia",
+        "Austria",
+        "Belarus",
+        "Cyprus",
+        "Canada",
+        "India",
+        "Spain",
+        "Focus",
+        "Status",
+        "Campus",
+        "Remote in Europe",
+        "London or Berlin",
+        "Work with us",
+        "Rio de Janeiro",
+    ]:
+        assert is_us_location(location) is False
