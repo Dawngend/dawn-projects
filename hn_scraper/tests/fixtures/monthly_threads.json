@@ -1,0 +1,46 @@
+{
+  "hits": [
+    {
+      "objectID": "45678901",
+      "title": "Ask HN: Who wants to be hired? (November 2026)",
+      "author": "whoishiring",
+      "created_at": "2026-11-02T17:01:05.000Z",
+      "created_at_i": 1793660465,
+      "url": null
+    },
+    {
+      "objectID": "45678902",
+      "title": "Ask HN: Who is hiring? (November 2026)",
+      "author": "whoishiring",
+      "created_at": "2026-11-02T17:00:05.000Z",
+      "created_at_i": 1793660405,
+      "url": null
+    },
+    {
+      "objectID": "45678903",
+      "title": "Ask HN: Who wants to be hired? (November 2026)",
+      "author": "someone_else",
+      "created_at": "2026-11-02T18:00:05.000Z",
+      "created_at_i": 1793664005,
+      "url": null
+    },
+    {
+      "objectID": "45678904",
+      "title": "Ask HN: Who wants to be hired? (October 2026)",
+      "author": "whoishiring",
+      "created_at": "2026-10-01T17:01:05.000Z",
+      "created_at_i": 1790895665,
+      "url": null
+    },
+    {
+      "objectID": "",
+      "title": "Ask HN: Who wants to be hired? (November 2026)",
+      "author": "whoishiring",
+      "created_at": "2026-11-02T19:00:05.000Z",
+      "created_at_i": 1793667605,
+      "url": null
+    }
+  ],
+  "hitsPerPage": 20,
+  "page": 0
+}

@@ -1,0 +1,42 @@
+{
+  "id": 45678901,
+  "title": "Ask HN: Who wants to be hired? (November 2026)",
+  "author": "whoishiring",
+  "created_at": "2026-11-02T17:01:05.000Z",
+  "type": "story",
+  "children": [
+    {
+      "id": 45679010,
+      "author": "sample_dev",
+      "created_at": "2026-11-02T18:15:00.000Z",
+      "type": "comment",
+      "text": "Location: Austin, TX | Remote: Yes | Willing to relocate: No<p>Backend Python developer. Contact: sample at example dot com</p>",
+      "children": [
+        {
+          "id": 45679011,
+          "author": "reply_user",
+          "created_at": "2026-11-02T19:00:00.000Z",
+          "type": "comment",
+          "text": "Nice profile, good luck!",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 45679020,
+      "author": "data_person",
+      "created_at": "2026-11-02T20:30:00.000Z",
+      "type": "comment",
+      "text": "Location: Remote (US) | Remote: Yes | Willing to relocate: Yes<p>Data analyst looking for a new role.</p>",
+      "children": []
+    },
+    {
+      "id": 45679030,
+      "author": null,
+      "created_at": "2026-11-02T21:00:00.000Z",
+      "type": "comment",
+      "text": null,
+      "children": []
+    }
+  ]
+}
