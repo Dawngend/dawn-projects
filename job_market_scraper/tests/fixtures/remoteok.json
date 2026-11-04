@@ -1,0 +1,30 @@
+[
+  {
+    "last_updated": 1762080000,
+    "legal": "API terms of use"
+  },
+  {
+    "id": "1001",
+    "date": "2026-11-01T10:00:00+00:00",
+    "company": "Northstar AI",
+    "position": "Machine Learning Engineer",
+    "tags": ["python", "machine-learning", "pytorch"],
+    "location": "Worldwide",
+    "salary_min": 130000,
+    "salary_max": 170000,
+    "url": "https://remoteok.com/remote-jobs/1001",
+    "description": "Build and deploy machine learning models in Python."
+  },
+  {
+    "id": "1002",
+    "date": "2026-11-02T14:30:00+00:00",
+    "company": "Pixel Studio",
+    "position": "Product Designer",
+    "tags": ["design", "figma"],
+    "location": "United States",
+    "salary_min": 0,
+    "salary_max": 0,
+    "url": "https://remoteok.com/remote-jobs/1002",
+    "description": "Design interfaces for web products."
+  }
+]

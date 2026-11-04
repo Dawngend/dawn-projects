@@ -1,0 +1,31 @@
+{
+  "jobCount": 2,
+  "jobs": [
+    {
+      "id": 4001,
+      "url": "https://jobicy.com/jobs/4001-data-engineer",
+      "jobTitle": "Data Engineer",
+      "companyName": "StreamWorks",
+      "jobGeo": "Anywhere",
+      "pubDate": "2026-11-02 07:30:00",
+      "jobIndustry": ["Data Science", "Engineering"],
+      "annualSalaryMin": 110000,
+      "annualSalaryMax": 140000,
+      "salaryCurrency": "USD",
+      "jobDescription": "Build ETL jobs and warehouse tables in Python and SQL."
+    },
+    {
+      "id": 4002,
+      "url": "https://jobicy.com/jobs/4002-account-executive",
+      "jobTitle": "Account Executive",
+      "companyName": "SalesFlow",
+      "jobGeo": "Germany",
+      "pubDate": "2026-11-03 09:00:00",
+      "jobIndustry": ["Sales"],
+      "annualSalaryMin": "",
+      "annualSalaryMax": "",
+      "salaryCurrency": "",
+      "jobDescription": "Manage enterprise accounts across Europe."
+    }
+  ]
+}

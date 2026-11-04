@@ -1,0 +1,27 @@
+{
+  "job-count": 2,
+  "jobs": [
+    {
+      "id": 2001,
+      "url": "https://remotive.com/remote-jobs/software-dev/backend-python-engineer-2001",
+      "title": "Backend Python Engineer",
+      "company_name": "CloudPipe",
+      "tags": ["python", "backend", "postgresql"],
+      "publication_date": "2026-11-01T09:15:00",
+      "candidate_required_location": "Worldwide",
+      "salary": "$120,000 - $150,000",
+      "description": "Maintain backend services and data pipelines."
+    },
+    {
+      "id": 2002,
+      "url": "https://remotive.com/remote-jobs/marketing/content-writer-2002",
+      "title": "Content Writer",
+      "company_name": "Storyline",
+      "tags": ["writing", "seo"],
+      "publication_date": "2026-11-02T11:00:00",
+      "candidate_required_location": "UK Only",
+      "salary": "",
+      "description": "Write blog posts and guides."
+    }
+  ]
+}

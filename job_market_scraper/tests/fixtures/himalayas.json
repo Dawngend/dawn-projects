@@ -1,0 +1,28 @@
+{
+  "jobs": [
+    {
+      "title": "Data Scientist",
+      "companyName": "Signal Labs",
+      "applicationLink": "https://himalayas.app/companies/signal-labs/jobs/data-scientist",
+      "locationRestrictions": ["Worldwide"],
+      "pubDate": "2026-11-01T08:00:00Z",
+      "categories": ["Data Science", "Python", "AI"],
+      "minSalary": 115000,
+      "maxSalary": 145000,
+      "currency": "USD",
+      "description": "Analyze product metrics and train forecasting models."
+    },
+    {
+      "title": "Customer Support Specialist",
+      "companyName": "HelpDesk Co",
+      "applicationLink": "https://himalayas.app/companies/helpdesk-co/jobs/customer-support-specialist",
+      "locationRestrictions": ["Canada", "United States"],
+      "pubDate": "2026-11-03T12:00:00Z",
+      "categories": ["Customer Support"],
+      "minSalary": null,
+      "maxSalary": null,
+      "currency": "USD",
+      "description": "Answer customer tickets by email and chat."
+    }
+  ]
+}

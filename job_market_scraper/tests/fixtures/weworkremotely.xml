@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>We Work Remotely: Remote Jobs</title>
+    <link>https://weworkremotely.com</link>
+    <item>
+      <title>Vector Metrics: AI Engineer</title>
+      <link>https://weworkremotely.com/remote-jobs/vector-metrics-ai-engineer</link>
+      <region>Anywhere in the World</region>
+      <pubDate>Mon, 02 Nov 2026 10:00:00 +0000</pubDate>
+      <category>Back-End Programming</category>
+      <category>Machine Learning</category>
+      <description>Work on LLM tooling and Python backend APIs.</description>
+    </item>
+    <item>
+      <title>Bright Ledger: Bookkeeper</title>
+      <link>https://weworkremotely.com/remote-jobs/bright-ledger-bookkeeper</link>
+      <region>USA Only</region>
+      <pubDate>Tue, 03 Nov 2026 15:20:00 +0000</pubDate>
+      <category>Finance</category>
+      <description>Prepare monthly financial statements.</description>
+    </item>
+  </channel>
+</rss>
