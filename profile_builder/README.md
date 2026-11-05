@@ -1,18 +1,26 @@
-# Hi, I'm Sample Person
+# Profile Builder
 
-Placeholder bio. Data science student learning AI and ML engineering.
+Builds a GitHub profile README from `profile.json`. When `github_username` is set, it fetches public repos and sorts them by last push.
 
-## Links
+## Run
 
-- [GitHub](https://github.com/sample-person)
-- [LinkedIn](https://www.linkedin.com/in/sample-person)
-- [Portfolio](https://sample-person.example.com)
+From `projects/profile_builder`, run the generator in an output folder so it does not replace this guide:
 
-## Skills
+```powershell
+mkdir output
+cd output
+python ../build.py ../profile.json
+```
 
-Python, pandas, scikit-learn, SQL
+The generated file is `output/README.md`.
 
-## Featured Projects
+## Tests
 
-- [placeholder-project-one](https://github.com/sample-person/placeholder-project-one): Placeholder description for the first project.
-- [placeholder-project-two](https://github.com/sample-person/placeholder-project-two): Placeholder description for the second project.
+From `projects/profile_builder`, run the tests:
+
+```powershell
+python -m pip install pytest
+python -m pytest -v tests
+```
+
+Tests are offline and make no network calls.
