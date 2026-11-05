@@ -7,6 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import build
 from build import build_readme
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -63,8 +64,20 @@ def test_small_profile_matches_expected_text():
     "optional_fields",
     [
         {},
-        {"bio": "", "links": {}, "skills": [], "projects": []},
-        {"bio": None, "links": None, "skills": None, "projects": None},
+        {
+            "bio": "",
+            "links": {},
+            "skills": [],
+            "projects": [],
+            "github_projects": [],
+        },
+        {
+            "bio": None,
+            "links": None,
+            "skills": None,
+            "projects": None,
+            "github_projects": None,
+        },
     ],
 )
 def test_missing_or_empty_optional_sections_are_omitted(optional_fields):
@@ -82,6 +95,28 @@ def test_only_populated_sections_are_included():
         "## Skills\n"
         "\n"
         "Python\n"
+    )
+
+
+def test_github_projects_are_rendered_as_a_table():
+    repo = {
+        "name": "demo",
+        "html_url": "https://github.com/test-name/demo",
+        "description": "A demo | project.",
+        "language": "Python",
+        "stargazers_count": 3,
+        "pushed_at": "2025-02-03T04:05:06Z",
+    }
+    profile = {"name": "Test Name", "github_projects": [repo]}
+
+    assert build_readme(profile) == (
+        "# Hi, I'm Test Name\n"
+        "\n"
+        "## GitHub Projects\n"
+        "\n"
+        "| Project | Description | Language | Stars | Last Push |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| [demo](https://github.com/test-name/demo) | A demo \\| project. | Python | 3 | 2025-02-03 |\n"
     )
 
 
@@ -122,3 +157,41 @@ def test_command_writes_utf8_without_optional_sections(tmp_path):
     )
 
     assert read_text(tmp_path / "README.md") == "# Hi, I'm Jos\u00e9\n"
+
+
+def test_command_fetches_github_projects_when_username_is_set(tmp_path, monkeypatch):
+    profile_path = tmp_path / "profile.json"
+    profile_path.write_text(
+        json.dumps({"name": "Test Name", "github_username": "test-name"}),
+        encoding="utf-8",
+    )
+    repo = {
+        "name": "demo",
+        "html_url": "https://github.com/test-name/demo",
+        "description": "A demo project.",
+        "language": "Python",
+        "stargazers_count": 3,
+        "pushed_at": "2025-02-03T04:05:06Z",
+    }
+    requested = []
+
+    def fake_fetch_public_repos(username):
+        requested.append(username)
+        return [repo]
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["build.py", "profile.json"])
+    monkeypatch.setattr(build, "fetch_public_repos", fake_fetch_public_repos)
+
+    build.main()
+
+    assert requested == ["test-name"]
+    assert read_text(tmp_path / "README.md") == (
+        "# Hi, I'm Test Name\n"
+        "\n"
+        "## GitHub Projects\n"
+        "\n"
+        "| Project | Description | Language | Stars | Last Push |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| [demo](https://github.com/test-name/demo) | A demo project. | Python | 3 | 2025-02-03 |\n"
+    )
