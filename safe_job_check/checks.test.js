@@ -1,116 +1,264 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const { runInNewContext } = require("node:vm");
 const { checks, checkJobPost } = require("./checks");
 
-const riskySamples = [
+const samples = [
   {
-    name: "Personal email address",
-    text: "For an interview, email recruiting.manager@gmail.com with your resume.",
+    name: "Asks for money, fees or equipment purchases",
+    risky: [
+      "Pay a $75 training fee before starting your new position.",
+      "You must buy equipment from our vendor before you can start.",
+      "Send the refundable deposit in Bitcoin to the recruiter.",
+      "Buy two iTunes gift cards and send us the codes.",
+      "Buy Google Play cards and send us the codes.",
+      "Please transfer money to us through Zelle to apply.",
+      "An application fee is required to apply.",
+    ],
+    clean: [
+      "We build Bitcoin wallets and cryptocurrency trading software.",
+      "Design payment integrations for Zelle and gift cards.",
+      "We pay for your training and purchase equipment for you.",
+      "We cover all application fees and background check costs.",
+      "You will receive an equipment stipend through payroll.",
+      "No fees or equipment purchases are required.",
+      "You do not need to buy equipment or pay any fees.",
+      "Never send money or buy gift cards for a recruiter.",
+      "We never ask candidates to send Bitcoin or transfer money.",
+    ],
   },
   {
-    name: "Interview only through a messaging app",
-    text: "Your interview will be conducted only on Telegram.",
+    name: "Asks for ID, bank or card details early",
+    risky: [
+      "Reply with your SSN and bank account number before we arrange an interview.",
+      "Please upload a copy of your passport to apply.",
+      "Send your debit card details to the recruiter.",
+      "Provide your ID before the interview through our secure onboarding portal.",
+    ],
+    clean: [
+      "Build bank account and credit card payment systems.",
+      "A driver's license is needed to operate the delivery van.",
+      "We never ask for your SSN or bank account number during interviews.",
+      "Do not send your passport or bank details to recruiters.",
+      "Provide your bank details through secure payroll after accepting a written offer.",
+      "After you are hired, upload your ID through our secure onboarding portal.",
+      "Please provide support for bank account integrations.",
+    ],
   },
   {
-    name: "Request for money, fees, or purchases",
-    text: "Pay a $75 training fee before starting your new remote position.",
+    name: "Interview only over chat apps",
+    risky: [
+      "Your interview will be conducted only on Telegram.",
+      "We conduct interviews exclusively through WhatsApp.",
+      "The interview is text-only via Google Chat, with no video call.",
+    ],
+    clean: [
+      "Build Telegram bots and WhatsApp integrations.",
+      "We use Signal and Discord for team communication.",
+      "Message the manager on Telegram to schedule a video interview.",
+      "Interviews are available by video or WhatsApp, whichever you prefer.",
+      "We never conduct interviews only on Telegram.",
+      "Interviews are not only on WhatsApp but also available by phone.",
+      "Only our team announcements use Telegram. Interviews are held by video.",
+    ],
   },
   {
-    name: "Request for money, fees, or purchases",
-    text: "Buy two iTunes gift cards for office supplies and send us the codes.",
+    name: "Free email address instead of a company address",
+    risky: [
+      "For an interview, email recruiting.manager@gmail.com with your resume.",
+      "Apply at hiring@yahoo.com.",
+      "Recruiter email: hiring@outlook.com",
+      "hiring@gmail.com",
+    ],
+    clean: [
+      "Apply by emailing careers@examplehealth.com.",
+      "Experience supporting Gmail and Outlook is useful.",
+      "Candidate email: applicant@gmail.com",
+      "Applicant's email address is applicant@gmail.com",
+      "Your email: applicant@gmail.com",
+      "You may apply from your personal email, such as applicant@gmail.com.",
+      "Do not contact hiring@gmail.com; use our official careers page.",
+      "Email careers@gmail.company with questions.",
+      "Email careers@gmail.com.example.org with questions.",
+    ],
   },
   {
-    name: "Request for money, fees, or purchases",
-    text: "Send the refundable deposit in Bitcoin to the hiring manager's wallet.",
+    name: "Pay that is far too high for the work",
+    risky: [
+      "Earn $5,000 per week doing easy work with no experience needed.",
+      "Make $500 per hour for simple data entry tasks.",
+      "For just a few minutes of work a day, earn $1,000 per day.",
+    ],
+    clean: [
+      "Senior surgeon needed at $800 per day with ten years of experience.",
+      "Expert consultant at $150 per hour for complex security audits.",
+      "Earn $500 per week with no experience required; training is provided.",
+      "Remote software engineer, $5,000 per week, requires distributed systems expertise.",
+      "Guaranteed base pay plus commission for sales staff.",
+      "We do not promise $5,000 per week for easy work.",
+      "Entry-level analyst at $25 per hour. Senior consultant at $150 per hour.",
+    ],
   },
   {
-    name: "Early request for personal or financial details",
-    text: "Reply with your SSN and bank account number before we arrange an interview.",
-  },
-  {
-    name: "Unrealistic pay or effortless income",
-    text: "Earn $5,000 per week from home doing easy work with no experience needed.",
-  },
-  {
-    name: "Urgency or pressure",
-    text: "Apply now today because there are limited spots. Start immediately.",
+    name: "Urgency and pressure",
+    risky: [
+      "Act now to secure your job offer.",
+      "Accept the offer within two hours or lose your place.",
+      "Apply now, today only, because there are limited spots.",
+      "Apply now today because there are limited spots. Start immediately.",
+      "You must reply immediately or the offer will be withdrawn.",
+    ],
+    clean: [
+      "Resolve urgent support tickets and handle customer pressure.",
+      "Apply now through our careers page.",
+      "We are hiring immediately; the start date is flexible.",
+      "Please respond to customers within two hours during your shift.",
+      "Applications close on November 30. Interviews take place next month.",
+      "We do not pressure applicants to act now.",
+    ],
   },
   {
     name: "Vague company or role",
-    text: "The company name is confidential and the duties will be discussed later.",
+    risky: [
+      "Company name not provided. Start your online role with us.",
+      "Job duties are unspecified; details will be shared after registration.",
+      "The employer name is withheld until you sign up.",
+      "The company name is confidential and the duties will be discussed later.",
+      "Job duties are unspecified, including how you will help customers.",
+    ],
+    clean: [
+      "Part-time receptionist at Example Health, scheduling appointments and greeting patients.",
+      "No experience required for our cashier role; you will process sales at Example Store.",
+      "Work from home as a support agent, answering customer questions for Example Health.",
+      "We provide full company details and a written job description.",
+      "Job details are available on the company careers page.",
+      "You will help customers whose company details are not provided.",
+    ],
   },
   {
-    name: "Cheque or payment forwarding",
-    text: "We will send you a cheque to deposit, then buy equipment from our vendor.",
+    name: "Cheque or payment-forwarding tasks",
+    risky: [
+      "We will send you a check to deposit, then buy equipment from our vendor.",
+      "Deposit a cheque into your personal bank account and send the remainder to our vendor.",
+      "Receive customer payments in your personal account and forward them to our suppliers.",
+      "Receive customer payments into your account and forward the balance to us.",
+    ],
+    clean: [
+      "We reimburse approved equipment purchases through payroll after you are hired.",
+      "Salary is paid by cheque every two weeks.",
+      "We send you a check for your monthly salary.",
+      "Accounts payable staff process payments through the company bank account.",
+      "Do not deposit a cheque or forward money for an unverified recruiter.",
+      "A background check is required before using company equipment.",
+    ],
   },
   {
-    name: "Cheque or payment forwarding",
-    text: "Receive customer payments into your account and forward the balance to us.",
-  },
-  {
-    name: "Poor grammar paired with a personal-information request",
-    text: "We is hiring. Need you send your bank account number for verify payroll.",
+    name: "Poor grammar with a request for personal information",
+    risky: [
+      "We is glad to offer you the job. Kindly send your full personal information.",
+      "You is selected; please provide your date of birth.",
+      "This is inform you to send your passport copy before the interview.",
+      "We is hiring. Need you send your bank account number for verify payroll.",
+    ],
+    clean: [
+      "Kindly send your resume and phone number to our company email.",
+      "Please provide your address due to the fact that this role requires local travel.",
+      "Please provide your full personal information through the secure onboarding portal.",
+      "We is happy to hear from you. Tell us about your experience.",
+      "We is hiring a coordinator at our office address.",
+      "We is hiring. Do not send your personal information.",
+      "We is hiring. Engineers maintain our servers. Please provide your phone number.",
+    ],
   },
 ];
 
-test("the rules cover the nine warning signs and include clear guidance", () => {
-  assert.equal(checks.length, 9);
-
+test("the nine signs each have a name, text test and plain guidance", () => {
+  assert.deepEqual(checks.map((check) => check.name), samples.map((sample) => sample.name));
   for (const check of checks) {
-    assert.equal(typeof check.name, "string");
-    assert.ok(check.name.length > 0);
     assert.equal(typeof check.test, "function");
-    assert.equal(typeof check.why, "string");
-    assert.ok(check.why.length > 0);
-    assert.equal(typeof check.whatToDo, "string");
-    assert.ok(check.whatToDo.length > 0);
+    assert.ok(check.why.trim().length > 0);
+    assert.ok(check.whatToDo.trim().length > 0);
   }
 });
 
-for (const sample of riskySamples) {
-  test(`detects ${sample.name}`, () => {
-    const check = checks.find((candidate) => candidate.name === sample.name);
-    assert.equal(check.test(sample.text), true);
-    assert.ok(checkJobPost(sample.text).some((warning) => warning.name === sample.name));
-  });
+for (const sample of samples) {
+  for (const text of sample.risky) {
+    test(`${sample.name}: detects ${text}`, () => {
+      const check = checks.find((candidate) => candidate.name === sample.name);
+      assert.equal(check.test(text), true);
+      assert.ok(checkJobPost(text).some((warning) => warning.name === sample.name));
+    });
+  }
+  for (const text of sample.clean) {
+    test(`${sample.name}: ignores ${text}`, () => {
+      const check = checks.find((candidate) => candidate.name === sample.name);
+      assert.equal(check.test(text), false);
+      assert.ok(!checkJobPost(text).some((warning) => warning.name === sample.name));
+    });
+  }
 }
 
-test("a clean job post has no warnings", () => {
+test("a detailed clean job post has no warnings", () => {
   const text = `
-    Senior software engineer at Example Health. We are hiring through our official
-    careers page. The role involves designing and maintaining healthcare software
-    with our engineering team. The salary range is $140,000 to $175,000 per year.
-    Apply at examplehealth.com/careers. Selected candidates will meet the team for
-    two interviews. Email careers@examplehealth.com with questions about the role.
+    Part-time support engineer at Example Health, working from home.
+    Maintain Telegram and WhatsApp integrations and support bank account systems.
+    We pay for training and provide company equipment. No experience required.
+    Senior specialists earn $150 per hour for complex security audits.
+    Apply through our careers page or email careers@examplehealth.com.
+    Kindly send your resume and phone number. Interviews are held by video.
+    After accepting a written offer, provide your bank details through secure payroll.
+    We reimburse approved equipment purchases after you are hired.
   `;
-
   assert.deepEqual(checkJobPost(text), []);
 });
 
-test("a risky job post reports all nine warning signs", () => {
+test("a risky job post reports all nine signs with guidance", () => {
   const text = `
-    Your interview will be conducted only on Telegram. Apply now today because
-    there are limited spots. The company name is confidential and the duties will
-    be discussed later. Pay a $75 training fee and buy iTunes gift cards. We will
-    send you a cheque to deposit and buy equipment. Reply with your SSN and bank
-    account number. We is hiring. Need you send your bank account number for verify
-    payroll. Earn $5,000 per week from home doing easy work. Email hiring@gmail.com.
+    Act now to secure your job offer. Contact hiring@gmail.com.
+    Your interview is only on Telegram. Pay a $75 training fee before starting.
+    We will send you a check to deposit for equipment. Reply with your SSN.
+    Earn $5,000 per week doing easy work. Company name not provided.
+    We is glad to offer you the job. Kindly send your personal information.
   `;
-  const warnings = checkJobPost(text);
-
   assert.deepEqual(
-    warnings.map((warning) => warning.name),
-    checks.map((check) => check.name),
-  );
-  assert.deepEqual(
-    warnings,
+    checkJobPost(text),
     checks.map(({ name, why, whatToDo }) => ({ name, why, whatToDo })),
   );
 });
 
+test("separate safe statements do not hide real requests", () => {
+  for (const text of [
+    "We never ask you to buy gift cards. Send Bitcoin to pay a training fee.",
+    "We pay for training, but you must buy equipment before starting.",
+    "Do not share your bank details with strangers. Send your SSN to apply.",
+    "We never ask for bank details; however, please upload your passport before the interview.",
+    "Candidate email: applicant@gmail.com, recruiter email: hiring@gmail.com.",
+    "You will help customers whose company details are not provided, but our company name is withheld.",
+  ]) {
+    assert.ok(checkJobPost(text).length > 0, text);
+  }
+});
+
+test("request detection handles wrapping, capitalization and repeated calls", () => {
+  const text = "PLEASE SEND\nyour SSN\nto apply.";
+  const first = checkJobPost(text);
+  assert.equal(first[0].name, "Asks for ID, bank or card details early");
+  assert.deepEqual(checkJobPost(text), first);
+});
+
+test("the rules also work as a plain browser script without CommonJS", () => {
+  const browser = {};
+  runInNewContext(readFileSync(require.resolve("./checks"), "utf8"), browser);
+  assert.equal(browser.safeJobCheck.checks.length, 9);
+  assert.equal(browser.safeJobCheck.checkJobPost("A support role at Example Health.").length, 0);
+  const warnings = browser.safeJobCheck.checkJobPost("Please send your SSN to apply.");
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0].name, "Asks for ID, bank or card details early");
+});
+
 test("empty and non-string input has no warnings", () => {
-  assert.deepEqual(checkJobPost(""), []);
-  assert.deepEqual(checkJobPost(null), []);
-  assert.deepEqual(checkJobPost(undefined), []);
-  assert.deepEqual(checkJobPost({ text: "Send Bitcoin" }), []);
+  for (const text of ["", "   ", null, undefined, 123, { text: "Send Bitcoin" }]) {
+    assert.deepEqual(checkJobPost(text), []);
+  }
 });
