@@ -1,0 +1,22 @@
+{
+  "name": "Sample Person",
+  "bio": "Placeholder bio. Data science student learning AI and ML engineering.",
+  "links": {
+    "GitHub": "https://github.com/sample-person",
+    "LinkedIn": "https://www.linkedin.com/in/sample-person",
+    "Portfolio": "https://sample-person.example.com"
+  },
+  "skills": ["Python", "pandas", "scikit-learn", "SQL"],
+  "projects": [
+    {
+      "name": "placeholder-project-one",
+      "url": "https://github.com/sample-person/placeholder-project-one",
+      "description": "Placeholder description for the first project."
+    },
+    {
+      "name": "placeholder-project-two",
+      "url": "https://github.com/sample-person/placeholder-project-two",
+      "description": "Placeholder description for the second project."
+    }
+  ]
+}
