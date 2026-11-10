@@ -12,6 +12,8 @@ def fetch_public_repos(username):
     )
     with urlopen(request, timeout=30) as response:
         repos = json.load(response)
+    if not isinstance(repos, list) or not all(isinstance(repo, dict) for repo in repos):
+        raise ValueError("GitHub response is not a list of repositories")
     return sort_by_last_push(repos)
 
 

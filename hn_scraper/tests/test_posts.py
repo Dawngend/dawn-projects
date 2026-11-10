@@ -130,6 +130,28 @@ def test_non_us_locations_are_skipped():
         assert is_us_location(location) is False
 
 
+def test_remarks_after_the_place_do_not_make_a_us_location():
+    for location in [
+        "Nigeria (UTC+1, same time zone as Central Europe; partial with US East Coast)",
+        "Hyderabad, India (for now, after 13 years in the US)",
+        "Dakar, Senegal (UTC+0, full overlap with Europe, morning overlap with US East)",
+        "Buenos Aires, Argentina (UTC-3, overlaps US mornings)",
+        "Remote; I work US and EU hours",
+        "Berlin - open to US hours",
+    ]:
+        assert is_us_location(location) is False
+
+
+def test_us_place_with_remarks_is_kept():
+    for location in [
+        "Berkeley, CA (SF Bay Area)",
+        "Atlanta, GA (Eastern time)",
+        "Cedar Falls, Iowa, USA (Central Time)",
+        "San Diego, California",
+    ]:
+        assert is_us_location(location) is True
+
+
 def test_unclear_and_unrecognized_locations_are_skipped():
     for location in [
         "",

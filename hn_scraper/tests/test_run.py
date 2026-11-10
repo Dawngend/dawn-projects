@@ -48,6 +48,56 @@ def read_posts(database_path):
         return [dict(row) for row in rows]
 
 
+@pytest.mark.parametrize(
+    "month",
+    [
+        "2026-1",
+        "2026-13",
+        "2026-00",
+        "26-01",
+        "2026/01",
+        "2026-11 ",
+        "2026-11-01",
+        "0000-01",
+        "9999-12",
+    ],
+)
+def test_malformed_month_fails_before_network_or_output(
+    tmp_path, monkeypatch, capsys, month
+):
+    fetch = Mock(side_effect=AssertionError("Network must not be called."))
+    monkeypatch.setattr(run, "fetch_top_level_comments", fetch)
+    output_dir = tmp_path / "output"
+
+    with pytest.raises(SystemExit) as error:
+        run.main(month, output_dir)
+
+    assert error.value.code == 2
+    assert capsys.readouterr().err == (
+        "error: Invalid month. Use YYYY-MM from 0001-01 to 9999-11, "
+        "for example --month 2026-11.\n"
+    )
+    fetch.assert_not_called()
+    assert not output_dir.exists()
+
+
+@pytest.mark.parametrize("month", ["0001-01", "2026-01", "2026-12", "9999-11"])
+def test_valid_month_boundaries_are_accepted(monkeypatch, month):
+    requested = []
+
+    def fake_fetch(requested_month):
+        requested.append(requested_month)
+        return []
+
+    monkeypatch.setattr(run, "fetch_top_level_comments", fake_fetch)
+    monkeypatch.setattr(run, "save_posts", Mock())
+    monkeypatch.setattr(run, "export_csv", Mock())
+
+    run.main(month, "output")
+
+    assert requested == [month]
+
+
 def test_main_saves_us_posts_for_the_month(tmp_path, saved_comments, capsys):
     output_dir = tmp_path / "output"
 

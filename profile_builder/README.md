@@ -12,7 +12,9 @@ cd output
 python ../build.py ../profile.json
 ```
 
-The generated file is `output/README.md`.
+The generated file is `output/README.md`. Running directly from `profile_builder` exits with an error to protect this guide. Run from a separate output folder instead. In other folders, the generator creates or replaces `README.md` in the current working directory.
+
+If fetching GitHub repositories fails, the generator exits with a short error and leaves any existing output unchanged. Check `github_username` and your connection, or try again later.
 
 ## Tests
 

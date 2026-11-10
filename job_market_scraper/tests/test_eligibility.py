@@ -73,6 +73,32 @@ def test_country_locations_are_skipped():
         assert location_is_open(location) is False
 
 
+def test_dotted_country_abbreviations_are_skipped():
+    for location in [
+        "U.S. Only",
+        "U.S.",
+        "U.S.A.",
+        "Remote - U.S.",
+        "Anywhere in the U.S.",
+        "U.K. Only",
+        "u.k.",
+    ]:
+        assert location_is_open(location) is False
+
+
+def test_open_locations_with_periods_are_kept():
+    for location in [
+        "Anywhere.",
+        "Worldwide. Async team.",
+        "Remote (incl. contractors)",
+    ]:
+        assert location_is_open(location) is True
+
+
+def test_dotted_us_location_is_not_eligible():
+    assert is_eligible({"title": "Data Scientist", "location": "U.S. Only"}) is False
+
+
 def test_is_eligible_needs_both():
     assert is_eligible({"title": "Data Scientist", "location": "Worldwide"}) is True
     assert is_eligible({"title": "Data Scientist", "location": "USA Only"}) is False

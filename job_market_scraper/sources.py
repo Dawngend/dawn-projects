@@ -54,6 +54,8 @@ def make_posting(
     salary,
     description,
 ):
+    if isinstance(tags, str):
+        tags = [tags]
     return {
         "title": (title or "").strip(),
         "company": (company or "").strip(),
@@ -67,18 +69,34 @@ def make_posting(
     }
 
 
+def has_title(title):
+    return isinstance(title, str) and bool(title.strip())
+
+
+def read_jobs(raw_data):
+    payload = json.loads(raw_data) if isinstance(raw_data, str) else raw_data
+    if not isinstance(payload, dict):
+        raise ValueError("Expected JSON object with a jobs list")
+    jobs = payload.get("jobs")
+    if not isinstance(jobs, list):
+        raise ValueError("Expected JSON object with a jobs list")
+    return jobs
+
+
 def fetch_remoteok():
     return fetch_url(REMOTEOK_URL)
 
 
 def parse_remoteok(raw_data):
     items = json.loads(raw_data) if isinstance(raw_data, str) else raw_data
+    if not isinstance(items, list):
+        raise ValueError("Expected JSON list of jobs")
     postings = []
     for item in items:
         if not isinstance(item, dict):
             continue
         title = item.get("position") or item.get("title")
-        if not title:
+        if not has_title(title):
             continue
         salary = item.get("salary") or format_salary(
             item.get("salary_min"), item.get("salary_max"), "USD"
@@ -104,12 +122,16 @@ def fetch_remotive():
 
 
 def parse_remotive(raw_data):
-    payload = json.loads(raw_data) if isinstance(raw_data, str) else raw_data
     postings = []
-    for item in payload.get("jobs", []):
+    for item in read_jobs(raw_data):
+        if not isinstance(item, dict):
+            continue
+        title = item.get("title")
+        if not has_title(title):
+            continue
         postings.append(
             make_posting(
-                title=item.get("title"),
+                title=title,
                 company=item.get("company_name"),
                 url=item.get("url"),
                 source="remotive",
@@ -128,9 +150,13 @@ def fetch_himalayas():
 
 
 def parse_himalayas(raw_data):
-    payload = json.loads(raw_data) if isinstance(raw_data, str) else raw_data
     postings = []
-    for item in payload.get("jobs", []):
+    for item in read_jobs(raw_data):
+        if not isinstance(item, dict):
+            continue
+        title = item.get("title")
+        if not has_title(title):
+            continue
         locations = item.get("locationRestrictions") or []
         location = ", ".join(locations) if isinstance(locations, list) else str(locations)
         salary = item.get("salary") or format_salary(
@@ -140,7 +166,7 @@ def parse_himalayas(raw_data):
         )
         postings.append(
             make_posting(
-                title=item.get("title"),
+                title=title,
                 company=item.get("companyName"),
                 url=item.get("applicationLink") or item.get("guid"),
                 source="himalayas",
@@ -159,9 +185,13 @@ def fetch_jobicy():
 
 
 def parse_jobicy(raw_data):
-    payload = json.loads(raw_data) if isinstance(raw_data, str) else raw_data
     postings = []
-    for item in payload.get("jobs", []):
+    for item in read_jobs(raw_data):
+        if not isinstance(item, dict):
+            continue
+        title = item.get("jobTitle")
+        if not has_title(title):
+            continue
         salary = item.get("salary") or format_salary(
             item.get("annualSalaryMin"),
             item.get("annualSalaryMax"),
@@ -169,7 +199,7 @@ def parse_jobicy(raw_data):
         )
         postings.append(
             make_posting(
-                title=item.get("jobTitle"),
+                title=title,
                 company=item.get("companyName"),
                 url=item.get("url"),
                 source="jobicy",
@@ -189,6 +219,8 @@ def fetch_weworkremotely():
 
 def parse_weworkremotely(raw_xml):
     root = ET.fromstring(raw_xml)
+    if root.tag != "rss" or root.find("channel") is None:
+        raise ValueError("Expected RSS root with a channel")
     postings = []
     for item in root.findall("./channel/item"):
         raw_title = item.findtext("title") or ""
@@ -196,6 +228,8 @@ def parse_weworkremotely(raw_xml):
             company, title = raw_title.split(": ", 1)
         else:
             company, title = "", raw_title
+        if not has_title(title):
+            continue
         tags = [elem.text for elem in item.findall("category") if elem.text]
         postings.append(
             make_posting(

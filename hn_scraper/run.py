@@ -1,13 +1,15 @@
 import argparse
 from pathlib import Path
 import re
+import sys
 
 from posts import is_us_location, parse_first_line
 from storage import OUTPUT_DIR, export_csv, save_posts
-from threads import fetch_top_level_comments
+from threads import fetch_top_level_comments, month_range
 
 # Posts write the contact as "Contact:" or "Email:", in the first line or the body.
 CONTACT_PATTERN = re.compile(r"\b(?:contact|email)\s*:\s*([^|<\n]+)", re.IGNORECASE)
+MONTH_PATTERN = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 
 def parse_contact(text):
@@ -17,7 +19,25 @@ def parse_contact(text):
     return match.group(1).strip() if match else ""
 
 
+def is_valid_month(month):
+    if not isinstance(month, str) or not MONTH_PATTERN.fullmatch(month):
+        return False
+    # Year 0000 and 9999-12 match the pattern but have no real date range.
+    try:
+        month_range(month)
+    except ValueError:
+        return False
+    return True
+
+
 def main(month, output_dir=None):
+    if not is_valid_month(month):
+        print(
+            "error: Invalid month. Use YYYY-MM from 0001-01 to 9999-11, "
+            "for example --month 2026-11.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
     if output_dir is None:
         output_dir = OUTPUT_DIR
     output_dir = Path(output_dir)

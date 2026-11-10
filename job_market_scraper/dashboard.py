@@ -121,7 +121,15 @@ def job_rows(postings):
     return "\n".join(rows)
 
 
-def build_dashboard(database_path):
+def build_dashboard(database_path, failed_sources=()):
+    notice = ""
+    if failed_sources:
+        names = escape(", ".join(failed_sources))
+        notice = (
+            f"<p><strong>Partial results. Failed sources: {names}.</strong> "
+            "Stored history may include older postings from these sources. "
+            "Try again later.</p>"
+        )
     postings = load_postings(database_path)
     eligible_postings = [posting for posting in postings if posting["eligible"]]
     titles = count_common(posting["title"] for posting in eligible_postings)
@@ -194,6 +202,7 @@ def build_dashboard(database_path):
 <body>
 <main>
   <h1>Job Market Dashboard</h1>
+  {notice}
   <p>{len(postings)} postings seen, {len(eligible_postings)} eligible.</p>
 
   <section>
@@ -298,8 +307,10 @@ def build_dashboard(database_path):
 """
 
 
-def write_dashboard(database_path, output_path):
+def write_dashboard(database_path, output_path, failed_sources=()):
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(build_dashboard(database_path), encoding="utf-8")
+    output_path.write_text(
+        build_dashboard(database_path, failed_sources), encoding="utf-8"
+    )
     return output_path

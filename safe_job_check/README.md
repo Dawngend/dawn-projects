@@ -11,7 +11,7 @@ Everything runs on your own machine. The text you paste is not sent anywhere and
 Paste the full post, including any application instructions, then select **Check job post**.
 The page shows a verdict, the number of warning signs, and each sign it found with why it matters and what to do next.
 
-- 0 warnings: Looks fine
+- 0 warnings: No warnings found
 - 1 or 2 warnings: Be careful
 - 3 or more warnings: High risk
 
@@ -25,8 +25,8 @@ Use Node.js 18 or newer. Run this command from `projects/safe_job_check`.
 node --test checks.test.js
 ```
 
-The 110 tests are offline and need no packages. They run each rule against risky and clean sample text, and check that `checks.js` also works as a plain browser script.
+The 114 tests are offline and need no packages. They run each rule against risky and clean sample text, check that `checks.js` also works as a plain browser script, and check the displayed verdicts.
 
 ## Hints, not proof
 
-The rules match patterns in wording. A warning is a reason to look closer, not proof that a job is a scam, and "Looks fine" does not mean a job is genuine. Verify the employer through its official website before sending money or personal information.
+The rules match patterns in wording. A warning is a reason to look closer, not proof that a job is a scam, and "No warnings found" does not mean a job is genuine. Verify the employer through its official website before sending money or personal information.

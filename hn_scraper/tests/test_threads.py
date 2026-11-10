@@ -1,6 +1,9 @@
+from datetime import datetime, timezone
 from pathlib import Path
 import sys
 from urllib.parse import parse_qs, urlparse
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -67,6 +70,29 @@ def test_fetch_monthly_threads_asks_algolia_for_that_month(monkeypatch):
     start, end = threads.month_range("2026-11")
     assert query["numericFilters"] == [f"created_at_i>={start},created_at_i<{end}"]
     assert start < end
+
+
+def utc_timestamp(year, month):
+    return int(datetime(year, month, 1, tzinfo=timezone.utc).timestamp())
+
+
+@pytest.mark.parametrize(
+    "month, start, end",
+    [
+        ("0001-01", (1, 1), (1, 2)),
+        ("2026-01", (2026, 1), (2026, 2)),
+        ("2026-12", (2026, 12), (2027, 1)),
+        ("9999-11", (9999, 11), (9999, 12)),
+    ],
+)
+def test_month_range_covers_the_whole_month(month, start, end):
+    assert threads.month_range(month) == (utc_timestamp(*start), utc_timestamp(*end))
+
+
+@pytest.mark.parametrize("month", ["0000-01", "9999-12"])
+def test_month_range_rejects_months_without_a_real_range(month):
+    with pytest.raises(ValueError):
+        threads.month_range(month)
 
 
 def test_parse_top_level_comments_from_saved_thread():

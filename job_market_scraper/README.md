@@ -18,11 +18,17 @@ Open `output/dashboard.html` in a browser to view the dashboard.
 The `output/` folder is ignored by Git.
 
 Run the same command again to update the dashboard and history.
-Existing postings keep their first-seen time, and their seen counts increase.
-Keep `output/history.db` to preserve the history.
+Existing postings keep their first-seen time. Each identity is counted once per run.
+Identity is `(source, url)` when a URL is present. Without a URL, it uses source, title,
+company, location, and publication date. Changing those fallback fields starts a new identity.
+If a batch contains duplicates, all posting fields come from the last entry, including empty values.
+Keep `output/history.db` to preserve the history. The next save automatically migrates older
+databases, preserving stored fields and counts. Previously merged jobs cannot be recovered.
 
-If a source cannot be fetched or parsed, the script stops before changing either output file.
-Check the reported error before trying again.
+If a source cannot be fetched or parsed, the script names it in stderr and continues with
+healthy sources. The console and dashboard mark these results as partial; stored history
+from failed sources is retained but not refreshed. Try again later. If all sources fail,
+the script exits with code 1 without changing either output file.
 
 ## Tests
 

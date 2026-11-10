@@ -217,6 +217,10 @@ CLOSED_LOCATIONS = [
     "turkmenistan",
     "tuvalu",
     "uk",
+    # Dotted forms like "U.S." and "U.K.". The last dot is left off so the
+    # word-boundary match still works.
+    "u.k",
+    "u.s",
     "united kingdom",
     "united states",
     "us",

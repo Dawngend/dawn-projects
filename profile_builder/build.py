@@ -1,6 +1,8 @@
 import argparse
+from http.client import HTTPException
 import json
 from pathlib import Path
+from urllib.error import URLError
 
 from github_repos import fetch_public_repos
 
@@ -63,15 +65,30 @@ def main():
     parser.add_argument("profile")
     args = parser.parse_args()
 
+    output_path = Path("README.md")
+    guide_path = Path(__file__).resolve().with_name("README.md")
+    if output_path.resolve() == guide_path.resolve():
+        parser.error(
+            "Refusing to overwrite the Profile Builder guide (README.md). "
+            "Run from a separate output folder."
+        )
+
     with open(args.profile, encoding="utf-8") as json_file:
         profile = json.load(json_file)
 
     github_projects = None
     github_username = profile.get("github_username")
     if github_username:
-        github_projects = fetch_public_repos(github_username)
+        try:
+            github_projects = fetch_public_repos(github_username)
+        except (URLError, OSError, HTTPException, ValueError):
+            parser.exit(
+                1,
+                "error: Unable to fetch GitHub repositories. "
+                "Check github_username and your connection, or try again later.\n",
+            )
 
-    Path("README.md").write_text(
+    output_path.write_text(
         build_readme(profile, github_projects), encoding="utf-8"
     )
 

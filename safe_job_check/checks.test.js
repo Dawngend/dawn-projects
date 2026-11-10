@@ -262,3 +262,50 @@ test("empty and non-string input has no warnings", () => {
     assert.deepEqual(checkJobPost(text), []);
   }
 });
+
+for (const [count, verdict, className] of [
+  [0, "No warnings found", "fine"],
+  [1, "Be careful", "careful"],
+  [2, "Be careful", "careful"],
+  [3, "High risk", "risk"],
+]) {
+  test(`${count} warnings display the verdict "${verdict}"`, () => {
+    const html = readFileSync(`${__dirname}/index.html`, "utf8");
+    const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const elements = {};
+    const browser = {
+      document: {
+        getElementById(id) {
+          if (!elements[id]) {
+            elements[id] = {
+              addEventListener() {},
+              replaceChildren() {},
+              appendChild() {},
+            };
+          }
+          return elements[id];
+        },
+        createElement() {
+          return { appendChild() {}, append() {} };
+        },
+        createTextNode(text) {
+          return text;
+        },
+      },
+    };
+    runInNewContext(script, browser);
+    const warnings = Array.from({ length: count }, () => ({
+      name: "Warning sign",
+      why: "Reason to look closer.",
+      whatToDo: "Verify the employer independently.",
+    }));
+    browser.showResults(warnings);
+    const warningCount = `${count} ${count === 1 ? "warning sign" : "warning signs"} found.`;
+    assert.equal(elements.verdict.textContent, verdict);
+    assert.equal(elements.verdict.className, className);
+    assert.equal(elements["warning-count"].textContent, warningCount);
+    assert.equal(elements["result-status"].textContent, `${verdict}. ${warningCount}`);
+    assert.equal(elements["no-warnings"].hidden, count !== 0);
+    assert.equal(elements.results.hidden, false);
+  });
+}

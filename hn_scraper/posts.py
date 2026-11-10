@@ -24,7 +24,6 @@ US_STATES = [
     "delaware",
     "district of columbia",
     "florida",
-    "georgia",
     "hawaii",
     "idaho",
     "illinois",
@@ -199,10 +198,22 @@ def parse_first_line(text):
     return fields
 
 
+def has_us_place(text):
+    return (
+        US_NAME_PATTERN.search(text) is not None
+        or US_CODE_PATTERN.search(text) is not None
+    )
+
+
 def is_us_location(location):
     if not location:
         return False
-    return (
-        US_NAME_PATTERN.search(location) is not None
-        or US_CODE_PATTERN.search(location) is not None
-    )
+    # Remarks after "(", ";" or a dash ("overlaps US mornings") do not say where the person lives.
+    main_place = re.split(r"\(|;| - | — ", location)[0]
+    if has_us_place(main_place):
+        return True
+    # "Remote (US)" has the place only inside the brackets.
+    if main_place.strip().lower() == "remote":
+        brackets = re.search(r"\(([^)]*)\)", location)
+        return brackets is not None and has_us_place(brackets.group(1))
+    return False

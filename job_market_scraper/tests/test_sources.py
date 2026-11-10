@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sources import (
@@ -100,6 +102,139 @@ def test_parse_jobicy():
     assert postings[1]["salary"] == ""
 
 
+@pytest.mark.parametrize(
+    "industry, expected_tags",
+    [
+        (" Data Science ", ["Data Science"]),
+        ([" Data Science ", "Engineering", " "], ["Data Science", "Engineering"]),
+        ("", []),
+        ("   ", []),
+        ([], []),
+        (None, []),
+    ],
+)
+def test_parse_jobicy_normalizes_string_and_list_tags(industry, expected_tags):
+    postings = parse_jobicy({
+        "jobs": [{"jobTitle": "Data Engineer", "jobIndustry": industry}]
+    })
+
+    assert len(postings) == 1
+    assert postings[0]["tags"] == expected_tags
+
+
+@pytest.mark.parametrize(
+    "parser, item, expected_title",
+    [
+        (parse_remotive, {"title": "Backend Engineer", "url": "u"}, "Backend Engineer"),
+        (parse_himalayas, {"title": "Data Scientist"}, "Data Scientist"),
+        (parse_jobicy, {"jobTitle": "Data Engineer"}, "Data Engineer"),
+    ],
+    ids=["remotive", "himalayas", "jobicy"],
+)
+@pytest.mark.parametrize("bad_entry", [None, "text", 42, ["nested"]])
+def test_parsers_skip_non_object_job_entries(parser, item, expected_title, bad_entry):
+    postings = parser({"jobs": [bad_entry, item]})
+
+    assert len(postings) == 1
+    assert postings[0]["title"] == expected_title
+
+
+@pytest.mark.parametrize(
+    "parser, title_field, item, expected_title",
+    [
+        (parse_remotive, "title", {"title": "Backend Engineer"}, "Backend Engineer"),
+        (parse_himalayas, "title", {"title": "Data Scientist"}, "Data Scientist"),
+        (parse_jobicy, "jobTitle", {"jobTitle": "Data Engineer"}, "Data Engineer"),
+    ],
+    ids=["remotive", "himalayas", "jobicy"],
+)
+@pytest.mark.parametrize("bad_title", [None, "", "   ", "\t\n"])
+def test_json_parsers_skip_blank_titles(parser, title_field, item, expected_title, bad_title):
+    postings = parser({"jobs": [{title_field: bad_title}, item]})
+
+    assert len(postings) == 1
+    assert postings[0]["title"] == expected_title
+
+
+@pytest.mark.parametrize(
+    "parser, item, expected_title",
+    [
+        (parse_remotive, {"title": "Backend Engineer"}, "Backend Engineer"),
+        (parse_himalayas, {"title": "Data Scientist"}, "Data Scientist"),
+        (parse_jobicy, {"jobTitle": "Data Engineer"}, "Data Engineer"),
+    ],
+    ids=["remotive", "himalayas", "jobicy"],
+)
+def test_json_parsers_skip_records_missing_titles(parser, item, expected_title):
+    postings = parser({"jobs": [{}, item]})
+
+    assert len(postings) == 1
+    assert postings[0]["title"] == expected_title
+
+
+@pytest.mark.parametrize("bad_title", [None, "", "   ", "\t\n"])
+def test_parse_remoteok_skips_blank_titles(bad_title):
+    postings = parse_remoteok([{"title": bad_title}, {"position": "ML Engineer"}])
+
+    assert len(postings) == 1
+    assert postings[0]["title"] == "ML Engineer"
+
+
+@pytest.mark.parametrize("bad_entry", [None, "text", 42, ["nested"], {"legal": "notice"}])
+def test_parse_remoteok_skips_bad_or_metadata_entries(bad_entry):
+    postings = parse_remoteok([bad_entry, {"position": "ML Engineer"}])
+
+    assert len(postings) == 1
+    assert postings[0]["title"] == "ML Engineer"
+
+
+@pytest.mark.parametrize("parser", [parse_remotive, parse_himalayas, parse_jobicy])
+@pytest.mark.parametrize(
+    "payload",
+    [
+        None,
+        "null",
+        "[]",
+        "42",
+        '"text"',
+        '{"jobs": null}',
+        '{"jobs": 42}',
+        '{"jobs": {"title": "Not a list"}}',
+        "{}",
+    ],
+)
+def test_json_job_parsers_reject_wrong_envelopes(parser, payload):
+    with pytest.raises(ValueError):
+        parser(payload)
+
+
+@pytest.mark.parametrize("parser", [parse_remotive, parse_himalayas, parse_jobicy])
+@pytest.mark.parametrize("payload", ['{"jobs": []}', {"jobs": []}])
+def test_json_job_parsers_allow_valid_empty_feeds(parser, payload):
+    assert parser(payload) == []
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        None,
+        "null",
+        "{}",
+        '{"jobs": []}',
+        "42",
+        '"text"',
+    ],
+)
+def test_parse_remoteok_rejects_wrong_envelopes(payload):
+    with pytest.raises(ValueError):
+        parse_remoteok(payload)
+
+
+@pytest.mark.parametrize("payload", ["[]", [], '[{"legal": "Remote OK API"}]'])
+def test_parse_remoteok_allows_valid_empty_feeds(payload):
+    assert parse_remoteok(payload) == []
+
+
 def test_parse_weworkremotely():
     postings = parse_weworkremotely(read_fixture("weworkremotely.xml"))
     assert_posting_shape(postings, "weworkremotely")
@@ -114,3 +249,41 @@ def test_parse_weworkremotely():
     assert first["tags"] == ["Back-End Programming", "Machine Learning"]
     assert first["salary"] == ""
     assert first["description"] == "Work on LLM tooling and Python backend APIs."
+
+
+def test_parse_weworkremotely_skips_items_without_usable_titles():
+    raw_xml = (
+        '<rss version="2.0"><channel>'
+        "<item><link>https://example.com/no-title</link></item>"
+        "<item><title></title><link>https://example.com/empty</link></item>"
+        "<item><title>   </title><link>https://example.com/blank</link></item>"
+        "<item><title>Acme: </title><link>https://example.com/company-only</link></item>"
+        "<item><title>Acme: ML Engineer</title>"
+        "<link>https://example.com/ml-engineer</link></item>"
+        "</channel></rss>"
+    )
+
+    postings = parse_weworkremotely(raw_xml)
+
+    assert len(postings) == 1
+    assert postings[0]["title"] == "ML Engineer"
+    assert postings[0]["company"] == "Acme"
+    assert postings[0]["url"] == "https://example.com/ml-engineer"
+
+
+@pytest.mark.parametrize(
+    "raw_xml",
+    [
+        "<html><body>Service Unavailable</body></html>",
+        '<rss version="2.0"></rss>',
+        "<feed><channel></channel></feed>",
+    ],
+)
+def test_parse_weworkremotely_rejects_wrong_envelopes(raw_xml):
+    with pytest.raises(ValueError):
+        parse_weworkremotely(raw_xml)
+
+
+def test_parse_weworkremotely_allows_valid_empty_feed():
+    raw_xml = '<rss version="2.0"><channel><title>We Work Remotely</title></channel></rss>'
+    assert parse_weworkremotely(raw_xml) == []

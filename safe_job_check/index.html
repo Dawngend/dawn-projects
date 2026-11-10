@@ -126,11 +126,11 @@
         <p id="no-warnings" hidden>No common warning signs were found in this text. Verify the employer and offer independently before sharing personal information.</p>
         <ul id="warning-list"></ul>
       </div>
-      <p class="note verdict-guide">0 warnings: Looks fine. 1–2 warnings: Be careful. 3 or more warnings: High risk.</p>
+      <p class="note verdict-guide">0 warnings: No warnings found. 1–2 warnings: Be careful. 3 or more warnings: High risk.</p>
     </section>
 
     <footer class="note">
-      <p>This tool flags patterns, not proof of a scam. “Looks fine” does not guarantee a job is genuine. Always verify the employer through its official website.</p>
+      <p>This tool flags patterns, not proof of a scam. “No warnings found” does not guarantee a job is genuine. Always verify the employer through its official website.</p>
     </footer>
   </main>
 
@@ -170,7 +170,7 @@
     function showResults(warnings) {
       const count = warnings.length;
       if (count === 0) {
-        verdict.textContent = "Looks fine";
+        verdict.textContent = "No warnings found";
         verdict.className = "fine";
       } else if (count < 3) {
         verdict.textContent = "Be careful";
