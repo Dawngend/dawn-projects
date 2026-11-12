@@ -309,3 +309,183 @@ for (const [count, verdict, className] of [
     assert.equal(elements.results.hidden, false);
   });
 }
+
+for (const [name, action] of [
+  ["Clear text resets displayed results and status", "clear"],
+  ["editing text then Clear text resets results and status", "edit"],
+  ["Clear text after an empty submission resets validation and status", "empty"],
+  ["typing after an empty submission clears validation but waits for Check", "type"],
+  ["typing after an empty submission restores the initial status", "recover"],
+]) {
+  test(name, () => {
+    const html = readFileSync(`${__dirname}/index.html`, "utf8");
+    const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const elements = {};
+    const browser = {
+      safeJobCheck: { checkJobPost },
+      document: {
+        getElementById(id) {
+          if (!elements[id]) {
+            elements[id] = {
+              listeners: {},
+              children: [],
+              attributes: {},
+              addEventListener(event, handler) { this.listeners[event] = handler; },
+              replaceChildren() { this.children = []; },
+              appendChild(child) { this.children.push(child); },
+              setAttribute(name, value) { this.attributes[name] = value; },
+              removeAttribute(name) { delete this.attributes[name]; },
+              focus() { this.focused = true; },
+            };
+          }
+          return elements[id];
+        },
+        createElement() {
+          return { appendChild() {}, append() {} };
+        },
+        createTextNode(text) {
+          return text;
+        },
+      },
+    };
+    runInNewContext(script, browser);
+    const jobPost = elements["job-post"];
+    const form = elements["check-form"];
+    form.reset = () => { jobPost.value = ""; };
+    elements.results.hidden = true;
+    elements["input-error"].hidden = true;
+    const emptySubmission = ["empty", "type", "recover"].includes(action);
+    jobPost.value = emptySubmission ? "" : "Please send your SSN to apply.";
+    form.listeners.submit({ preventDefault() {} });
+
+    if (emptySubmission) {
+      assert.equal(elements["input-error"].hidden, false);
+      assert.equal(jobPost.attributes["aria-invalid"], "true");
+      assert.equal(elements.results.hidden, true);
+    } else {
+      assert.equal(elements.results.hidden, false);
+      assert.equal(elements["warning-list"].children.length, 1);
+      assert.equal(elements["result-status"].textContent, "Be careful. 1 warning sign found.");
+    }
+
+    if (action === "type") {
+      jobPost.value = "Please send your SSN to apply.";
+      jobPost.listeners.input();
+
+      assert.equal(jobPost.value, "Please send your SSN to apply.");
+      assert.equal(elements["input-error"].hidden, true);
+      assert.equal(jobPost.attributes["aria-invalid"], undefined);
+      assert.equal(elements.results.hidden, true);
+      assert.equal(elements["warning-list"].children.length, 0);
+
+      form.listeners.submit({ preventDefault() {} });
+
+      assert.equal(elements.results.hidden, false);
+      assert.equal(elements["warning-list"].children.length, 1);
+      assert.equal(elements["result-status"].textContent, "Be careful. 1 warning sign found.");
+      return;
+    }
+
+    if (action === "recover") {
+      const initialStatus = "Paste a job post and select Check job post to see the results.";
+      assert.ok(html.includes(`class="note">${initialStatus}</p>`));
+      assert.equal(elements["result-status"].textContent, "Paste a job post or message before checking.");
+
+      jobPost.value = "Please send your SSN to apply.";
+      jobPost.listeners.input();
+
+      assert.equal(elements["input-error"].hidden, true);
+      assert.equal(jobPost.attributes["aria-invalid"], undefined);
+      assert.equal(elements.results.hidden, true);
+      assert.equal(elements["warning-list"].children.length, 0);
+      assert.equal(elements["result-status"].textContent, initialStatus);
+      return;
+    }
+
+    if (action === "edit") {
+      jobPost.value = "A support role at Example Health.";
+      jobPost.listeners.input();
+
+      assert.equal(jobPost.value, "A support role at Example Health.");
+      assert.equal(elements.results.hidden, true);
+      assert.equal(elements["warning-list"].children.length, 0);
+      assert.equal(
+        elements["result-status"].textContent,
+        "Text changed. Select Check job post to update the results.",
+      );
+    }
+
+    elements["clear-button"].listeners.click();
+
+    assert.equal(jobPost.value, "");
+    assert.equal(jobPost.focused, true);
+    assert.equal(elements.results.hidden, true);
+    assert.equal(elements["warning-list"].children.length, 0);
+    assert.equal(elements["input-error"].hidden, true);
+    assert.equal(jobPost.attributes["aria-invalid"], undefined);
+    assert.equal(
+      elements["result-status"].textContent,
+      "Paste a job post and select Check job post to see the results.",
+    );
+  });
+}
+
+test("submitting empty or whitespace-only text shows validation and clears results", () => {
+  const html = readFileSync(`${__dirname}/index.html`, "utf8");
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  const elements = {};
+  const browser = {
+    safeJobCheck: { checkJobPost },
+    document: {
+      getElementById(id) {
+        if (!elements[id]) {
+          elements[id] = {
+            listeners: {},
+            children: [],
+            attributes: {},
+            addEventListener(event, handler) { this.listeners[event] = handler; },
+            replaceChildren() { this.children = []; },
+            appendChild(child) { this.children.push(child); },
+            setAttribute(name, value) { this.attributes[name] = value; },
+            removeAttribute(name) { delete this.attributes[name]; },
+            focus() { this.focused = true; },
+          };
+        }
+        return elements[id];
+      },
+      createElement() {
+        return { appendChild() {}, append() {} };
+      },
+      createTextNode(text) {
+        return text;
+      },
+    },
+  };
+  runInNewContext(script, browser);
+  const jobPost = elements["job-post"];
+  const form = elements["check-form"];
+  assert.match(
+    html,
+    /<p id="input-error" class="error" hidden>Paste a job post or message before checking\.<\/p>/,
+  );
+  elements.results.hidden = true;
+  elements["input-error"].hidden = true;
+
+  for (const blank of ["", "   ", "\n\t "]) {
+    jobPost.value = "Please send your SSN to apply.";
+    form.listeners.submit({ preventDefault() {} });
+    assert.equal(elements.results.hidden, false);
+    assert.equal(elements["warning-list"].children.length, 1);
+
+    jobPost.focused = false;
+    jobPost.value = blank;
+    form.listeners.submit({ preventDefault() {} });
+
+    assert.equal(elements["result-status"].textContent, "Paste a job post or message before checking.");
+    assert.equal(elements["input-error"].hidden, false);
+    assert.equal(jobPost.attributes["aria-invalid"], "true");
+    assert.equal(jobPost.focused, true);
+    assert.equal(elements.results.hidden, true);
+    assert.equal(elements["warning-list"].children.length, 0);
+  }
+});

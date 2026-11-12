@@ -125,6 +125,33 @@ def test_github_projects_are_rendered_as_a_table():
     )
 
 
+@pytest.mark.parametrize(
+    "description",
+    ["A demo\nproject.", "A demo\r\nproject.", "A demo\rproject."],
+    ids=["newline", "crlf", "carriage-return"],
+)
+def test_github_description_line_breaks_render_as_one_row(description):
+    repo = {
+        "name": "demo",
+        "html_url": "https://github.com/test-name/demo",
+        "description": description,
+        "language": "Python",
+        "stargazers_count": 3,
+        "pushed_at": "2025-02-03T04:05:06Z",
+    }
+    profile = {"name": "Test Name", "github_projects": [repo]}
+
+    assert build_readme(profile) == (
+        "# Hi, I'm Test Name\n"
+        "\n"
+        "## GitHub Projects\n"
+        "\n"
+        "| Project | Description | Language | Stars | Last Push |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| [demo](https://github.com/test-name/demo) | A demo project. | Python | 3 | 2025-02-03 |\n"
+    )
+
+
 @pytest.mark.parametrize("working_folder", [".", "output"])
 def test_command_protects_its_guide(tmp_path, working_folder):
     for filename in ["build.py", "github_repos.py"]:

@@ -152,6 +152,32 @@ def test_us_place_with_remarks_is_kept():
         assert is_us_location(location) is True
 
 
+def test_remote_parentheses_accept_standalone_us_places():
+    for location in [
+        "Remote (US)",
+        "Remote (USA)",
+        "Remote (United States)",
+        "Remote (California)",
+        "Remote (TX)",
+        "Remote (NYC)",
+        "Remote (Austin, TX)",
+    ]:
+        assert is_us_location(location) is True
+
+
+def test_remote_parentheses_reject_us_remarks():
+    for location in [
+        "Remote (US hours)",
+        "Remote (overlap with US mornings)",
+        "Remote (US time zones)",
+        "Remote (US only)",
+        "Remote (California hours)",
+        "Remote (Europe, US)",
+        "Remote; (US)",
+    ]:
+        assert is_us_location(location) is False
+
+
 def test_unclear_and_unrecognized_locations_are_skipped():
     for location in [
         "",

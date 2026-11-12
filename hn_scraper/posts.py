@@ -176,6 +176,7 @@ US_NAME_PATTERN = build_word_pattern(
 )
 # Short codes stay uppercase so words like "in", "or", and "us" do not match.
 US_CODE_PATTERN = build_word_pattern(["US"] + US_STATE_CODES)
+REMOTE_PLACE_PATTERN = re.compile(r"remote\s*\(([^()]*)\)", re.IGNORECASE)
 
 
 def parse_first_line(text):
@@ -205,15 +206,23 @@ def has_us_place(text):
     )
 
 
+def is_us_place(text):
+    parts = [part.strip() for part in text.split(",")]
+    return all(
+        US_NAME_PATTERN.fullmatch(part) is not None
+        or US_CODE_PATTERN.fullmatch(part) is not None
+        for part in parts
+    )
+
+
 def is_us_location(location):
     if not location:
         return False
     # Remarks after "(", ";" or a dash ("overlaps US mornings") do not say where the person lives.
-    main_place = re.split(r"\(|;| - | — ", location)[0]
+    before_remark = re.split(r";| - | — ", location)[0]
+    main_place = before_remark.split("(", 1)[0]
     if has_us_place(main_place):
         return True
-    # "Remote (US)" has the place only inside the brackets.
-    if main_place.strip().lower() == "remote":
-        brackets = re.search(r"\(([^)]*)\)", location)
-        return brackets is not None and has_us_place(brackets.group(1))
-    return False
+    # "Remote (US)" names a place only when the brackets hold a place, not a remark like "US hours".
+    remote_match = REMOTE_PLACE_PATTERN.fullmatch(before_remark.strip())
+    return remote_match is not None and is_us_place(remote_match.group(1))

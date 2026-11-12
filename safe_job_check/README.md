@@ -25,7 +25,7 @@ Use Node.js 18 or newer. Run this command from `projects/safe_job_check`.
 node --test checks.test.js
 ```
 
-The 114 tests are offline and need no packages. They run each rule against risky and clean sample text, check that `checks.js` also works as a plain browser script, and check the displayed verdicts.
+The 120 tests are offline and need no packages. They run each rule against risky and clean sample text, check that `checks.js` also works as a plain browser script, and check the displayed verdicts, blank submissions, and result reset behavior.
 
 ## Hints, not proof
 

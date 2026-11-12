@@ -8,7 +8,13 @@ from github_repos import fetch_public_repos
 
 
 def format_cell(value):
-    return str(value or "").replace("|", "\\|").replace("\n", " ")
+    return (
+        str(value or "")
+        .replace("|", "\\|")
+        .replace("\r\n", " ")
+        .replace("\r", " ")
+        .replace("\n", " ")
+    )
 
 
 def build_github_table(repos):

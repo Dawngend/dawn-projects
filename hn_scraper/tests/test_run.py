@@ -5,6 +5,7 @@ import socket
 import sqlite3
 import sys
 from unittest.mock import Mock
+from urllib.error import URLError
 
 import pytest
 
@@ -132,3 +133,33 @@ def test_main_saves_us_posts_for_the_month(tmp_path, saved_comments, capsys):
     printed = capsys.readouterr().out
     assert "Comments read: 3" in printed
     assert "US posts saved: 2" in printed
+
+
+@pytest.mark.parametrize("files_exist", [True, False])
+def test_fetch_failure_happens_before_output_is_created_or_changed(
+    tmp_path, monkeypatch, files_exist
+):
+    output_dir = tmp_path / "output"
+    database_path = output_dir / "posts.db"
+    csv_path = output_dir / "posts.csv"
+    if files_exist:
+        output_dir.mkdir()
+        database_path.write_bytes(b"existing database bytes")
+        csv_path.write_bytes(b"existing csv bytes\n")
+        before = (database_path.read_bytes(), csv_path.read_bytes())
+
+    fetch = Mock(side_effect=URLError("connection refused"))
+    monkeypatch.setattr(run, "fetch_top_level_comments", fetch)
+
+    with pytest.raises(URLError, match="connection refused"):
+        run.main("2026-11", output_dir)
+
+    fetch.assert_called_once_with("2026-11")
+    if files_exist:
+        assert (database_path.read_bytes(), csv_path.read_bytes()) == before
+        assert sorted(path.name for path in output_dir.iterdir()) == [
+            "posts.csv",
+            "posts.db",
+        ]
+    else:
+        assert not output_dir.exists()

@@ -202,6 +202,9 @@
     });
 
     jobPost.addEventListener("input", () => {
+      if (!inputError.hidden) {
+        resetResults("Paste a job post and select Check job post to see the results.");
+      }
       inputError.hidden = true;
       jobPost.removeAttribute("aria-invalid");
       if (!results.hidden) {
