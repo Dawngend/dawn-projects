@@ -26,12 +26,13 @@ POSTING_FIELDS = (
 
 
 def fetch_url(url, delay_seconds=REQUEST_DELAY_SECONDS):
-    request = Request(url, headers={"User-Agent": USER_AGENT})
-    with urlopen(request, timeout=30) as response:
-        body = response.read().decode("utf-8")
-    if delay_seconds > 0:
-        time.sleep(delay_seconds)
-    return body
+    try:
+        request = Request(url, headers={"User-Agent": USER_AGENT})
+        with urlopen(request, timeout=30) as response:
+            return response.read().decode("utf-8")
+    finally:
+        if delay_seconds > 0:
+            time.sleep(delay_seconds)
 
 
 def format_salary(min_value, max_value, currency=""):

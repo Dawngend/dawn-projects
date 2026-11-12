@@ -1,10 +1,13 @@
+from io import BytesIO
 from pathlib import Path
 import sys
+from urllib.error import URLError
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import sources
 from sources import (
     POSTING_FIELDS,
     parse_himalayas,
@@ -27,6 +30,43 @@ def assert_posting_shape(postings, expected_source):
         assert tuple(post.keys()) == POSTING_FIELDS
         assert post["source"] == expected_source
         assert isinstance(post["tags"], list)
+
+
+def test_fetch_url_waits_after_a_successful_fetch(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(sources, "urlopen", lambda request, timeout: BytesIO(b"body"))
+    monkeypatch.setattr(sources.time, "sleep", sleeps.append)
+
+    body = sources.fetch_url("https://example.com/api")
+
+    assert body == "body"
+    assert sleeps == [1.0]
+
+
+def test_fetch_url_waits_when_fetching_fails(monkeypatch):
+    sleeps = []
+
+    def fail(request, timeout):
+        raise URLError("connection refused")
+
+    monkeypatch.setattr(sources, "urlopen", fail)
+    monkeypatch.setattr(sources.time, "sleep", sleeps.append)
+
+    with pytest.raises(URLError):
+        sources.fetch_url("https://example.com/api")
+
+    assert sleeps == [1.0]
+
+
+def test_fetch_url_waits_when_decoding_fails(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(sources, "urlopen", lambda request, timeout: BytesIO(b"\xff"))
+    monkeypatch.setattr(sources.time, "sleep", sleeps.append)
+
+    with pytest.raises(UnicodeDecodeError):
+        sources.fetch_url("https://example.com/api")
+
+    assert sleeps == [1.0]
 
 
 def test_parse_remoteok():

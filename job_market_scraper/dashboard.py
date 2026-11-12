@@ -29,9 +29,16 @@ def load_postings(database_path):
     for row in rows:
         posting = dict(row)
         try:
-            posting["tags"] = json.loads(posting["tags"])
+            tags = json.loads(posting["tags"])
         except json.JSONDecodeError:
-            posting["tags"] = []
+            tags = []
+        if isinstance(tags, str):
+            tags = [tags]
+        elif isinstance(tags, list):
+            tags = [tag for tag in tags if isinstance(tag, str)]
+        else:
+            tags = []
+        posting["tags"] = [tag.strip() for tag in tags if tag.strip()]
         postings.append(posting)
     return postings
 
@@ -118,6 +125,11 @@ def job_rows(postings):
             f"<td>{escape(tags)}</td>"
             "</tr>"
         )
+    rows.append(
+        '<tr id="no-matches" hidden>'
+        '<td colspan="7">No matching postings.</td>'
+        "</tr>"
+    )
     return "\n".join(rows)
 
 
@@ -197,6 +209,18 @@ def build_dashboard(database_path, failed_sources=()):
   a {{
     color: #075985;
   }}
+  .sr-only {{
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }}
 </style>
 </head>
 <body>
@@ -269,6 +293,7 @@ def build_dashboard(database_path, failed_sources=()):
     <h2>Eligible Postings</h2>
     <label for="job-search">Search eligible postings</label>
     <input id="job-search" type="search" placeholder="Search title, company, source, location, salary, or tag">
+    <p id="search-status" class="sr-only" role="status"></p>
     <div class="table-wrap">
       <table id="jobs-table">
         <caption>Eligible postings with links to the source posting</caption>
@@ -293,13 +318,33 @@ def build_dashboard(database_path, failed_sources=()):
 <script>
   const searchInput = document.getElementById("job-search");
   const jobRows = document.querySelectorAll(".job-row");
+  const noMatchesRow = document.getElementById("no-matches");
+  const searchStatus = document.getElementById("search-status");
 
   searchInput.addEventListener("input", function () {{
-    const searchText = searchInput.value.toLowerCase();
+    const searchText = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
     jobRows.forEach(function (row) {{
-      const rowText = row.textContent.toLowerCase();
-      row.style.display = rowText.includes(searchText) ? "" : "none";
+      const rowText = Array.from(row.cells)
+        .map(function (cell) {{
+          return cell.textContent.toLowerCase();
+        }})
+        .join("\\n");
+      const isVisible = rowText.includes(searchText);
+      row.style.display = isVisible ? "" : "none";
+      if (isVisible) {{
+        visibleCount += 1;
+      }}
     }});
+    if (noMatchesRow) {{
+      noMatchesRow.hidden = visibleCount > 0;
+      if (searchStatus) {{
+        const statusText = visibleCount === 0 ? "No matching postings." : "";
+        if (searchStatus.textContent !== statusText) {{
+          searchStatus.textContent = statusText;
+        }}
+      }}
+    }}
   }});
 </script>
 </body>
